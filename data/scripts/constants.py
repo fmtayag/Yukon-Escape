@@ -13,8 +13,12 @@ SNOW_WHITE = (245, 245, 255)
 
 # Sprite groups ================================================================
 sprites = pygame.sprite.Group()
-snowballs = pygame.sprite.Group()
-impacted_snowballs = pygame.sprite.Group()
 enemies = pygame.sprite.Group()
+debris_group = pygame.sprite.Group()
+impacted_debris = pygame.sprite.Group()
 bullets = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
+particles = list()
+
+# Movement =====================================================================
+SPRITE_MOVESPEED = 8
