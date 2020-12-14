@@ -12,7 +12,7 @@ def draw_text(surf, text, size, font, x, y, color):
     font = pygame.font.Font(font, size)
     text_surface = font.render(text, True, color)
     text_rect = text_surface.get_rect()
-    text_rect.centerx = x
+    text_rect.x = x
     text_rect.y = y
     surf.blit(text_surface, (text_rect.x, text_rect.y))
 

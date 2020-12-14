@@ -1,0 +1,9 @@
+Every 20-30 seconds there is a 75% chance that a "threat event" will trigger.
+	- Create a "threat_timer" object
+	- Create a "threat_delay" variable
+In an event there is approximately 30-50 sprites that will spawn in waves or sequentially.
+	- Switch to a roll spawn routine specific to threat event.
+	- Randomize a sprite_count variable
+	- Create a "sprites_spawned" variable to track how many sprites have been spawned
+	- Event stops after sprite_spawned is equal sprite_count
+	- Randomize "threat_delay" variable after a threat event has finished

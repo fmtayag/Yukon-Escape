@@ -2,7 +2,7 @@
 try:
     import pygame, os, random, math
     from itertools import repeat
-    from data.scripts.sprites import Player, Obstacle, Snowmobile, Debris, Particle
+    from data.scripts.sprites import Player, Obstacle, Fracture, Debris, Particle
     from data.scripts.constants import *
     from data.scripts.draw import draw_background, draw_text, draw_hp, shake
 except ImportError as e:
@@ -25,6 +25,7 @@ FONT_DIR = os.path.join(DATA_DIR, "font")
 clock = pygame.time.Clock()
 FPS = 60
 # Other
+GAME_FONT = os.path.join(FONT_DIR, "prstartk.ttf")
 offset = repeat((0, 0)) # For screen shake
 
 # Initialize the window ========================================================
@@ -59,7 +60,18 @@ obstacle_imgs = [load_png("obstacle1.png", IMG_DIR, 6),
                  load_png("obstacle4.png", IMG_DIR, 6),
                  load_png("obstacle5.png", IMG_DIR, 6),
                  load_png("obstacle6.png", IMG_DIR, 6),
-                 load_png("obstacle7.png", IMG_DIR, 6)]
+                 load_png("obstacle7.png", IMG_DIR, 6),
+                 load_png("obstacle8.png", IMG_DIR, 6)]
+
+# Fracture images
+fracture_imgs = [load_png("fracture1.png", IMG_DIR, 6),
+                 load_png("fracture2.png", IMG_DIR, 6),
+                 load_png("fracture3.png", IMG_DIR, 6),
+                 load_png("fracture4.png", IMG_DIR, 6),
+                 load_png("fracture5.png", IMG_DIR, 6),
+                 load_png("fracture6.png", IMG_DIR, 6),
+                 load_png("fracture7.png", IMG_DIR, 6),
+                 load_png("fracture8.png", IMG_DIR, 6)]
 
 # Debris images
 debris_imgs = dict()
@@ -94,16 +106,23 @@ def spawn_obstacle():
     if len(hits) == 0:
         sprites.add(o)
         enemies.add(o)
+        obstacles.add(o)
 
-def spawn_snowmobile():
-    s = Snowmobile(snowmobile_img, e_bullet_img)
-    sprites.add(s)
-    enemies.add(s)
+def spawn_fracture():
+    f = Fracture(fracture_imgs)
+    hits_fractures = pygame.sprite.spritecollide(f, fracture_group, False)
+    hits_enemies = pygame.sprite.spritecollide(f, enemies, False)
+    if len(hits_fractures) == 0 and len(hits_enemies) == 0:
+        sprites.add(f)
+        fracture_group.add(f)
 
 def spawn_debris():
     d = Debris(debris_imgs, window)
-    debris_group.add(d)
-    enemies.add(d)
+    hits_debris = pygame.sprite.spritecollide(d, debris_group, False)
+    hits_enemies = pygame.sprite.spritecollide(d, enemies, False)
+    if len(hits_debris) == 0 and len(hits_enemies) == 0:
+        sprites.add(d)
+        debris_group.add(d)
 
 def spawn_particles(x, y, amnt, colors, launch_type):
     for _ in range(amnt):
@@ -121,12 +140,12 @@ def update_particles():
                 particles.remove(p)
                 del p
 
-def roll_spawn():
-    enemies = ["debris", "obstacle"]
+def roll_spawn(score):
+    enemies = ["obstacle", "debris", "fracture"]
     roll = None
     
     # Generate choices and get roll
-    choices = random.choices(enemies, [0.25, 0.75], k=10)
+    choices = random.choices(enemies, [8,1,1], k=10)
     roll = random.choice(choices)
 
     # Run spawner functions
@@ -134,6 +153,8 @@ def roll_spawn():
         spawn_obstacle()
     elif roll == "debris":
         spawn_debris()
+    elif roll == "fracture":
+        spawn_fracture()
 
 # Game loop ====================================================================
 
@@ -148,13 +169,17 @@ while running:
     score = 0
     background_y = 0 # For the background's y coordinate
     parallax_y = 0 # For the parallax's y coordinate
-    sprites.empty()
     enemies.empty()
+    obstacles.empty()
+    debris_group.empty()
+    impdebris_group.empty()
+    fracture_group.empty()
     particles[:] = []
 
     # Initialize the player
     player = Player(player_img)
     sprites.add(player)
+    player_group.add(player)
 
     while in_menu:
 
@@ -206,9 +231,24 @@ while running:
 
         # Update processes =====================================================
 
+        hits = pygame.sprite.groupcollide(enemies, player_group, False, False, pygame.sprite.collide_circle)
+        for hit in hits:
+            # TODO - Distinguish impacted debris and opened fractures
+            print(type(hit) == Obstacle)
+            player.has_collided = True
+            offset = shake(20,5)
+            in_game = False
+            in_gameover = True
+
+        # Add score
+        score += 0.1
+            
         # Spawn enemies
-        if len(enemies) < 3:
-            roll_spawn()
+        enemy_count = (score**2) / (8**4)
+        if enemy_count > 12:
+            enemy_count = 12
+        if len(enemies) < enemy_count:
+            roll_spawn(score)
 
         # Produce particle explosion if debris impacted
         for d in debris_group:
@@ -216,26 +256,35 @@ while running:
                 offset = shake(15, 5)
                 d.shaked = True
                 debris_group.remove(d)
-                impacted_debris.add(d)
+                impdebris_group.add(d)
+                enemies.add(d)
                 spawn_particles(d.rect.centerx, d.rect.centery, random.randrange(30,40), [(125,149,162)], "explosion")
 
+        # Produce shaking if fracture has opened up
+        for f in fracture_group:
+            if f.fractured:
+                offset = shake(20,5)
+                fracture_group.remove(f)
+                opfracture_group.add(f)
+                enemies.add(f)
+                
         # Spawn trail for player
-        spawn_particles(player.rect.centerx, player.rect.bottom, random.randrange(5,10), [(185,191,251)], "trail")
+        spawn_particles(player.rect.centerx, player.rect.bottom, 5, [(163,167,194)], "trail")
 
-        # Update sprite groups
+        # Update sprites group
         sprites.update()
-        debris_group.update()
-        impacted_debris.update()
-        bullets.update()
 
         # Draw processes =======================================================
-
         draw_background(window, background_img, background_rect, background_y)
         update_particles()
-        sprites.draw(window)
-        impacted_debris.draw(window)
+        fracture_group.draw(window)
+        obstacles.draw(window)
+        impdebris_group.draw(window)
+        opfracture_group.draw(window)
+        player_group.draw(window)
         debris_group.draw(window)
-        bullets.draw(window)
+        draw_text(window, f"DIST", 24, GAME_FONT, 10, 10, (0,0,0))
+        draw_text(window, f"{math.trunc(score)}m", 24, GAME_FONT, 10, 50, (0,0,0))
         draw_background(window, parallax_img, parallax_rect, parallax_y)
         window.blit(window, next(offset)) # Screen shake
 
@@ -243,6 +292,10 @@ while running:
         pygame.display.flip()
 
     while in_gameover:
+        
+        # Increment the background's and parallax's y positions
+        background_y += SPRITE_MOVESPEED
+        parallax_y += (SPRITE_MOVESPEED + 1)
 
         # Lock the FPS
         clock.tick(FPS)
@@ -255,11 +308,22 @@ while running:
 
         # Update processes =====================================================
 
-            # TODO
+        # Update sprites group
+        sprites.update()
 
         # Draw processes =======================================================
 
-            # TODO
+        draw_background(window, background_img, background_rect, background_y)
+        update_particles()
+        fracture_group.draw(window)
+        obstacles.draw(window)
+        impdebris_group.draw(window)
+        opfracture_group.draw(window)
+        player_group.draw(window)
+        debris_group.draw(window)
+        draw_text(window, f"DIST", 24, GAME_FONT, 10, 10, (0,0,0))
+        draw_text(window, f"GAME OVER", 24, GAME_FONT, 50, 50, (0,0,0))
+        window.blit(window, next(offset))
 
         # Update the window
         pygame.display.flip()
