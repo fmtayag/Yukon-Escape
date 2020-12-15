@@ -2,7 +2,7 @@
 import pygame
 
 # Window Data ==================================================================
-WIN_RES = {"W": 600, "H": 800}
+WIN_RES = {"W": 600, "H": 680}
 TITLE = "Avalanche Escape"
 AUTHOR = "zyenapz"
 VERSION = "1.0"
