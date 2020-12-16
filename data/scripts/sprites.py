@@ -1,5 +1,6 @@
 import pygame, random
 from data.scripts.constants import *
+from data.scripts.draw import draw_text
 
 # Draw radius
 #temp_rect = self.image.get_rect()
@@ -79,7 +80,7 @@ class Obstacle(pygame.sprite.Sprite):
         self.spdy = SPRITE_MOVESPEED
         # For collision
         self.radius = 30
-    
+
     def update(self):
         
         # Draw radius
@@ -235,8 +236,9 @@ class Debris(pygame.sprite.Sprite):
             return random.choice([-2,2])
 
 class Particle():
-    def __init__(self, window, WIN_RES, x, y, colors, launch_type):
+    def __init__(self, window, WIN_RES, x, y, colors, launch_type, font):
         self.window = window
+        self.font = font
         self.WIN_RES = WIN_RES
         self.x = x
         self.y = y
@@ -252,6 +254,11 @@ class Particle():
             self.spdy = SPRITE_MOVESPEED
             self.size = 16
             self.y = self.y - 32
+        elif self.launch_type == "coins":
+            self.spdx = random.choice([-1,1])
+            self.spdy = -1
+            self.size = 16
+            self.y = self.y + random.randrange(-16,16)
 
     def update(self):
         self.x += self.spdx
@@ -266,3 +273,6 @@ class Particle():
             pygame.draw.rect(self.window, self.color, (self.x, self.y, self.size, self.size))
         elif self.launch_type == "trail":
             pygame.draw.rect(self.window, self.color, (self.x-2, self.y, self.size, self.size))
+        elif self.launch_type == "coins":
+            draw_text(self.window, f"+5", 24, self.font, self.x, self.y, (0,0,0), "centered")
+            self.spdy += 0.5

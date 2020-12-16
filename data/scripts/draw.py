@@ -1,12 +1,21 @@
 import pygame
 
-def draw_background(surf, img, img_rect, ypos):
-    surf_h = surf.get_height()
-    rel_y = ypos % img_rect.height
-    surf.blit(img, (0, rel_y - img_rect.height))
+def draw_background(surf, img, img_rect, pos, direction="vertical"):
+    if direction == "vertical":
+        surf_h = surf.get_height()
+        rel_y = pos % img_rect.height
+        surf.blit(img, (0, rel_y - img_rect.height))
 
-    if rel_y < surf_h:
-        surf.blit(img, (0, rel_y))
+        if rel_y < surf_h:
+            surf.blit(img, (0, rel_y))
+
+    elif direction == "horizontal":
+        surf_w = surf.get_width()
+        rel_x = pos % img_rect.width
+        surf.blit(img, (rel_x - img_rect.width, 0))
+
+        if rel_x < surf_w:
+            surf.blit(img, (rel_x, 0))
 
 def draw_text(surf, text, size, font, x, y, color, align="normal"):
     font = pygame.font.Font(font, size)

@@ -23,14 +23,14 @@ SFX_DIR = os.path.join(DATA_DIR, "sfx")
 SCRIPTS_DIR = os.path.join(DATA_DIR, "scripts")
 FONT_DIR = os.path.join(DATA_DIR, "font")
 
-# FPS and timing
+# Other variables
 clock = pygame.time.Clock()
-FPS = 60
 speed_timer = pygame.time.get_ticks()
-
-# Other
-GAME_FONT = os.path.join(FONT_DIR, "prstartk.ttf")
 offset = repeat((0, 0)) # For screen shake
+near_misses = list()
+
+# Fonts =======================================================================
+GAME_FONT = os.path.join(FONT_DIR, "prstartk.ttf")
 
 # Initialize the window ========================================================
 os.environ['SDL_VIDEO_CENTERED'] = '1'
@@ -105,6 +105,8 @@ explosions_sfx = [ load_sound("explosion1.wav", SFX_DIR, 0.5),
                    load_sound("explosion2.wav", SFX_DIR, 0.5),
                    load_sound("explosion3.wav", SFX_DIR, 0.5) ]
 
+award_sfx = load_sound("award.wav", SFX_DIR, 0.5)
+
 # Spawner Functions ============================================================
 
 def spawn_obstacle():
@@ -136,18 +138,21 @@ def spawn_debris():
 
 def spawn_particles(x, y, amnt, colors, launch_type):
     for _ in range(amnt):
-        p = Particle(window, WIN_RES, random.randrange(x-10,x), random.randrange(y-10,y), colors, launch_type)
-        particles.append(p)
+        p = Particle(window, WIN_RES, random.randrange(x-10,x), random.randrange(y-10,y), colors, launch_type, GAME_FONT)
+        if launch_type == "coins":
+            particles_coins.append(p)
+        else:
+            particles.append(p)
 
-def update_particles():
-    for p in particles:
+def update_particles(particles_list):
+    for p in particles_list:
         p.update()
 
         if (p.x < -p.size or
             p.x > p.WIN_RES["W"] + p.size or
             p.y < -p.size or
             p.y > p.WIN_RES["H"] + p.size):
-                particles.remove(p)
+                particles_list.remove(p)
                 del p
 
 def roll_spawn(score, enemies, probability):
@@ -177,7 +182,7 @@ while running:
     # Reset / initialize the score, and others
     score = 0
     background_y = 0 # For the background's y coordinate
-    parallax_y = 0 # For the parallax's y coordinate
+    parallax_x = 0 # For the parallax's x coordinate
     warmup_timer = pygame.time.get_ticks()
     warmup_duration = 3000
     disable_keys_timer = pygame.time.get_ticks()
@@ -188,6 +193,8 @@ while running:
     impdebris_group.empty()
     fracture_group.empty()
     particles[:] = []
+    particles_coins[:] = []
+    near_misses[:] = []
 
     # Initialize the player
     player = Player(player_img)
@@ -198,7 +205,7 @@ while running:
         
         # Increment the background's and parallax's y positions
         background_y += SPRITE_MOVESPEED
-        parallax_y += (SPRITE_MOVESPEED + 1)
+        parallax_x += PARALLAX_MOVESPEED
 
         # Lock the FPS
         clock.tick(FPS)
@@ -210,7 +217,7 @@ while running:
                 in_menu = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_a:
-                    in_menu = False 
+                    in_menu = False
                     in_game = True
                 elif event.key == pygame.K_d:
                     in_menu = False 
@@ -219,9 +226,9 @@ while running:
         # Draw processes =======================================================
 
         draw_background(window, background_img, background_rect, background_y)
-        draw_background(window, parallax_img, parallax_rect, parallax_y)
-        draw_text(window, f"Avalanche", 54, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.1, (0,0,0), "centered")
-        draw_text(window, f"Escape!", 65, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.2, (0,0,0), "centered")
+        draw_background(window, parallax_img, parallax_rect, parallax_x, "horizontal")
+        draw_text(window, f"Frost", 54, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.1, (0,0,0), "centered")
+        draw_text(window, f"Rush!", 48, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.2, (0,0,0), "centered")
         draw_text(window, f"powered by pygame", 24, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.3, (125,125,125), "centered")
         draw_text(window, f"[A] Play", 32, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.4, (0,0,0), "centered")
         draw_text(window, f"[D] Exit", 32, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.45, (0,0,0), "centered")
@@ -233,7 +240,7 @@ while running:
 
         # Increment the background's and parallax's y positions
         background_y += SPRITE_MOVESPEED
-        parallax_y += (SPRITE_MOVESPEED + 1)
+        parallax_x += PARALLAX_MOVESPEED
 
         # Lock the FPS
         clock.tick(FPS)
@@ -280,6 +287,36 @@ while running:
         for hit in hits:
             spawn_particles(hit.rect.centerx, hit.rect.top, random.randrange(30,40), hit.palette, "explosion")
             hit.kill()
+        
+        # Check for near misses and append to near_misses list
+        hits = pygame.sprite.groupcollide(enemies, player_group, False, False)
+        for hit in hits:
+            if hit not in near_misses:
+
+                is_collidable = False # Just some bool to check if fractures and debris are in their collidable state
+
+                if type(hit) == Fracture:
+                    if hit.fractured:
+                        is_collidable = True
+                elif type(hit) == Debris:
+                    if hit.impacted:
+                        is_collidable = True
+                elif type(hit) == Obstacle:
+                    is_collidable = True
+                    
+                distance = hit.radius * 1.1
+                proximity_x = abs(hit.rect.centerx - player.rect.centerx)
+
+                if is_collidable and proximity_x < distance:
+                    near_misses.append(hit)
+        
+        # Award player for near misses
+        for hit in near_misses:
+            if not pygame.sprite.collide_rect(hit, player):
+                score += 5
+                spawn_particles(hit.rect.centerx, hit.rect.top, 1, [(240,181,65), (255,238,131)], "coins")
+                award_sfx.play()
+                near_misses.remove(hit)
                     
         # End the game if player has collided
         if player.has_collided:
@@ -294,7 +331,7 @@ while running:
         now = pygame.time.get_ticks()
         if now - warmup_timer > warmup_duration:
             # Add score
-            score += 0.1
+            score += 0.05
                 
             # Calculate enemy count
             enemy_count = (score**2) / (10**4)
@@ -335,20 +372,30 @@ while running:
         sprites.update()
 
         # Draw processes =======================================================
+
+        # Draw the background
         draw_background(window, background_img, background_rect, background_y)
-        update_particles()
+
+        # Draw the sprites and particles
         fracture_group.draw(window)
         obstacles.draw(window)
         opfracture_group.draw(window)
         impdebris_group.draw(window)
+        update_particles(particles)
+        update_particles(particles_coins)
         player_group.draw(window)
         debris_group.draw(window)
+
+        # Draw the parallax
+        draw_background(window, parallax_img, parallax_rect, parallax_x, "horizontal")
+
+        # Draw the 'Get Ready Text'
         now = pygame.time.get_ticks()
         if now - warmup_timer < warmup_duration * 0.8:
             draw_text(window, f"Get Ready!", 48, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.4, (0,0,0), "centered")
         draw_text(window, f"Score", 24, GAME_FONT, 10, 10, (0,0,0))
         draw_text(window, f"{math.trunc(score)}", 24, GAME_FONT, 10, 50, (0,0,0))
-        draw_background(window, parallax_img, parallax_rect, parallax_y)
+        
         window.blit(window, next(offset)) # Screen shake
 
         # Update the window
@@ -358,7 +405,7 @@ while running:
         
         # Increment the background's and parallax's y positions
         background_y += SPRITE_MOVESPEED
-        parallax_y += (SPRITE_MOVESPEED + 1)
+        parallax_x += PARALLAX_MOVESPEED
 
         # Lock the FPS
         clock.tick(FPS)
@@ -395,20 +442,30 @@ while running:
 
         # Draw processes =======================================================
 
+        # Draw the background
         draw_background(window, background_img, background_rect, background_y)
-        update_particles()
+
+        # Update and draw the particles
+        update_particles(particles)
+        update_particles(particles_coins)
+
+        # Draw the sprites
         fracture_group.draw(window)
         obstacles.draw(window)
         impdebris_group.draw(window)
         opfracture_group.draw(window)
         player_group.draw(window)
         debris_group.draw(window)
+
+        # Draw the parallax
+        draw_background(window, parallax_img, parallax_rect, parallax_x, "horizontal")
+
+        # Draw texts
         draw_text(window, f"Score", 24, GAME_FONT, 10, 10, (0,0,0))
         draw_text(window, f"{math.trunc(score)}", 24, GAME_FONT, 10, 50, (0,0,0))
         draw_text(window, f"GAME OVER!", 48, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.3, (0,0,0), "centered")
-        draw_text(window, f"Your score is", 24, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.4, (0,0,0), "centered")
+        draw_text(window, f"Your score", 24, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.4, (0,0,0), "centered")
         draw_text(window, f"{math.trunc(score)}", 28, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.45, (0,0,0), "centered")
-        draw_background(window, parallax_img, parallax_rect, parallax_y)
         now = pygame.time.get_ticks()
         if keys_enabled:
             draw_text(window, f"[A] Menu", 28, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.55, (0,0,0), "centered")
