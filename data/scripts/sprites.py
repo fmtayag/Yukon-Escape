@@ -76,10 +76,10 @@ class Obstacle(pygame.sprite.Sprite):
         self.image = self.roll_img(images)
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(0, WIN_RES["W"]-64)
-        self.rect.y = random.randrange(-256, -128)
+        self.rect.y = random.randrange(-1028, -128)
         self.spdy = SPRITE_MOVESPEED
         # For collision
-        self.radius = 30
+        self.radius = 28
 
     def update(self):
         
@@ -108,11 +108,12 @@ class Obstacle(pygame.sprite.Sprite):
 class Fracture(pygame.sprite.Sprite):
     def __init__(self, images):
         super().__init__()
-        self.images = images
+        self.variant = random.choice(["a", "b"])
+        self.images = images[self.variant]
         self.image = self.images[0]
         self.rect = self.image.get_rect()
         self.rect.x = random.randrange(-32, WIN_RES["W"]-64)
-        self.rect.y = random.randrange(-256, -128)
+        self.rect.y = random.randrange(-512, -128)
         self.spdy = SPRITE_MOVESPEED
         self.fracture_timer = pygame.time.get_ticks()
         self.fracture_delay = random.randrange(250,500)
@@ -229,9 +230,9 @@ class Debris(pygame.sprite.Sprite):
 
     def calc_spdx(self):
         if self.rect.centerx > WIN_RES["W"] / 2:
-            return -2
+            return random.randrange(-7,-1)
         elif self.rect.centerx < WIN_RES["W"] / 2:
-            return 2
+            return random.randrange(1,7)
         else:
             return random.choice([-2,2])
 
@@ -274,5 +275,5 @@ class Particle():
         elif self.launch_type == "trail":
             pygame.draw.rect(self.window, self.color, (self.x-2, self.y, self.size, self.size))
         elif self.launch_type == "coins":
-            draw_text(self.window, f"+5", 24, self.font, self.x, self.y, (0,0,0), "centered")
+            draw_text(self.window, f"+5", 24, self.font, self.x, self.y, BLACK, "centered")
             self.spdy += 0.5
