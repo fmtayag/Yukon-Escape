@@ -33,6 +33,7 @@ class Player(pygame.sprite.Sprite):
 
                 # Get pressed key
                 pressed = pygame.key.get_pressed()
+                
                 if pressed[pygame.K_a]:
                     self.spdx = -self.movspd
                     self.rotate_img(40)
@@ -275,5 +276,5 @@ class Particle():
         elif self.launch_type == "trail":
             pygame.draw.rect(self.window, self.color, (self.x-2, self.y, self.size, self.size))
         elif self.launch_type == "coins":
-            draw_text(self.window, f"+5", 24, self.font, self.x, self.y, BLACK, "centered")
+            draw_text(self.window, f"+8", 32, self.font, self.x, self.y, BLACK, "centered")
             self.spdy += 0.5

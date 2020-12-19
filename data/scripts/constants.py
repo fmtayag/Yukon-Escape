@@ -39,7 +39,7 @@ spawn_odds["hard"] = [6,2,2]
 
 MAX_THREAT_ENEMIES = dict()
 MAX_THREAT_ENEMIES["tectonics"] = 10
-MAX_THREAT_ENEMIES["forest"] = 20
+MAX_THREAT_ENEMIES["forest"] = 24
 MAX_THREAT_ENEMIES["debris"] = 7
 
 # Movement =====================================================================

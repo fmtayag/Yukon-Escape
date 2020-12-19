@@ -1,5 +1,5 @@
 Yukon Escape
-Release version: 1.0
+Release version: 1.0.1
 Author: zyenapz
 E-mail: zyenapz@gmail.com
 Website: zyenapz.github.io
@@ -24,3 +24,9 @@ Music: 'Mountain Trials' downloaded from YouTube and made by Joshua McLean
 Other assets:
 	- Wind ambience downloaded from Yap Audio Production 
 	- Alarm downloaded from fesliyanstudios.com
+
+-------------------------------------------------
+Update 1.0.1
+- Changed the spawning rate of the obstacles so that the action starts sooner.
+- Increased the reward for near misses from 5 points to 8 points.
+- Made the reward points' font larger.

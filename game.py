@@ -358,7 +358,7 @@ while running:
         # Award player for near misses
         for hit in near_misses:
             if not pygame.sprite.collide_rect(hit, player):
-                score += 5
+                score += 8
                 spawn_particles(hit.rect.centerx, hit.rect.top, 1, [(240,181,65), (255,238,131)], "coins")
                 award_sfx.play()
                 near_misses.remove(hit)
@@ -384,7 +384,7 @@ while running:
                     threat = "none"
                     threats_delay = THREATS_WAIT
                 else:
-                    threats_roll = random.choices(["tectonics", "forest", "debris"], [2,4,3], k=10)
+                    threats_roll = random.choices(["tectonics", "forest", "debris"], [3,4,2], k=10)
                     threat = random.choice(threats_roll)
                     threats_delay = 8000
                     alarm_sfx.play()
@@ -393,7 +393,7 @@ while running:
             score += 0.05
                 
             # Calculate enemy count
-            enemy_count = (score**2) / (10**4)
+            enemy_count = (score**2) / (4**4)
             if enemy_count > 15:
                 enemy_count = 15
 
