@@ -173,7 +173,7 @@ class Debris(pygame.sprite.Sprite):
         self.shaked = False # Bool if it has shaked the screen. See game loop.
         self.is_above_player = False
         # The point at which the object will stop moving on the y-axis
-        self.max_disty = random.randrange(96, WIN_RES["H"] * 0.2)
+        self.max_disty = random.randrange(96, WIN_RES["H"] * 0.3)
         # For shrinking
         self.shrink_timer = pygame.time.get_ticks()
         self.shrink_delay = 80
@@ -278,3 +278,41 @@ class Particle():
         elif self.launch_type == "coins":
             draw_text(self.window, f"+8", 32, self.font, self.x, self.y, BLACK, "centered")
             self.spdy += 0.5
+
+class Shadow():
+    def __init__(self, window, Caster, x, y):
+        self.window = window 
+        self.x = x
+        self.y = round(y * 1.5)
+        self.Caster = Caster
+
+    def update(self):
+        radius = 5 * (self.Caster.scaler + 1)
+        pygame.draw.circle(self.window, SHADOW, (self.Caster.rect.centerx, self.y), radius)
+        #pygame.draw.circle(self.window, SHADOW, (self.Caster.rect.centerx, self.y), radius)
+
+class Bouncy():
+    def __init__(self, window):
+        self.window = window
+        self.x = random.randrange(0, window.get_width())
+        self.y = random.randrange(0, window.get_height())
+        self.size = random.choice([16,32])
+        self.speedx = random.choice([-3,3])
+        self.speedy = random.choice([-3,3])
+
+    def draw(self):
+        
+        if self.x < 0:
+            self.speedx = abs(self.speedx)
+        elif self.x > self.window.get_width():
+            self.speedx = -self.speedx
+
+        if self.y < 0:
+            self.speedy = abs(self.speedy)
+        elif self.y > self.window.get_height():
+            self.speedy = -self.speedy 
+
+        pygame.draw.rect(self.window, SHADOW, (self.x, self.y, self.size, self.size))
+
+        self.x += self.speedx
+        self.y += self.speedy

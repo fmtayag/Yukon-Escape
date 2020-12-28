@@ -1,8 +1,8 @@
 # Import libraries =============================================================
 try:
-    import pygame, os, random, math
+    import pygame, os, math, random
     from itertools import repeat
-    from data.scripts.sprites import Player, Obstacle, Fracture, Debris, Particle
+    from data.scripts.sprites import Player, Obstacle, Fracture, Debris, Particle, Shadow, Bouncy
     from data.scripts.constants import *
     from data.scripts.draw import draw_background, draw_text, shake
     from data.scripts.highscores import write_highscores, read_highscores, sort
@@ -113,6 +113,7 @@ alert_debris_img = load_png("alert_debris.png", IMG_DIR, 6)
 alert_rect = alert_forest_img.get_rect()
 alert_rect.centerx = WIN_RES["W"] / 2
 alert_rect.y = WIN_RES["H"] * 0.1
+dev_logo_img = load_png("dev_logo.png", IMG_DIR, 6)
 
 # Sounds =======================================================================
 
@@ -121,7 +122,7 @@ def load_sound(filename, sfx_dir, volume):
     snd = pygame.mixer.Sound(path)
     snd.set_volume(volume)
     return snd
-
+    
 explosions_sfx = [ load_sound("explosion1.wav", SFX_DIR, 0.5),
                    load_sound("explosion2.wav", SFX_DIR, 0.5),
                    load_sound("explosion3.wav", SFX_DIR, 0.5) ]
@@ -130,7 +131,7 @@ award_sfx = load_sound("award.wav", SFX_DIR, 0.5)
 alarm_sfx = load_sound("alarm.wav", SFX_DIR, 0.5)
 
 pygame.mixer.music.load(os.path.join(SFX_DIR, "Joshua McLean - Mountain Trials.ogg"))
-pygame.mixer.music.set_volume(0.15)
+pygame.mixer.music.set_volume(0.10)
 
 # Spawner Functions ============================================================
 
@@ -153,6 +154,7 @@ def spawn_fracture():
         fracture_group.add(f)
 
 def spawn_debris():
+    # Spawn debris
     d = Debris(debris_imgs, window)
     hits_debris = pygame.sprite.spritecollide(d, debris_group, False)
     hits_enemies = pygame.sprite.spritecollide(d, enemies, False)
@@ -160,6 +162,21 @@ def spawn_debris():
         sprites.add(d)
         enemies.add(d)
         debris_group.add(d)
+
+        # Spawn shadow
+        spawn_shadow(d)
+
+def spawn_shadow(d):
+    shadow = Shadow(window, d, d.rect.centerx, d.max_disty)
+    shadows.append(shadow)
+
+def update_shadows(shadows_list):
+    for shadow in shadows_list:
+        shadow.update()
+
+        if shadow.Caster.impacted:
+            shadows_list.remove(shadow)
+            del shadow
 
 def spawn_particles(x, y, amnt, colors, launch_type):
     for _ in range(amnt):
@@ -195,20 +212,27 @@ def roll_spawn(score, enemies, probability):
     elif roll == "fracture":
         spawn_fracture()
 
+def spawn_bouncies():
+    for _ in range(4):
+        b = Bouncy(window)
+        bouncies.append(b)
+
+def draw_bouncies(bouncies):
+    for b in bouncies:
+        b.draw()
+
 # Game loop ====================================================================
 
 running = True
-in_menu = True
+in_titlescreen = True
+in_menu = False
 in_game = False
 in_gameover = False
-
-# Play the soundtrack
-pygame.mixer.music.play(loops=-1)
-pygame.mixer.Channel(0).play(pygame.mixer.Sound(os.path.join(SFX_DIR, "ambience.wav")), -1)
 
 while running:
 
     # Reset / initialize the score, and others
+    ts_timer = pygame.time.get_ticks() # Title screen timer
     hs_saved = False
     score = 0
     threats_prompt_timer = pygame.time.get_ticks()
@@ -231,12 +255,49 @@ while running:
     particles[:] = []
     particles_coins[:] = []
     near_misses[:] = []
-
+    shadows[:] = []
+    
     # Initialize the player
     player = Player(player_img)
     sprites.add(player)
     player_group.add(player)
 
+    # Spawn bouncies for title screen
+    spawn_bouncies()
+
+    while in_titlescreen:
+
+        # Lock the FPS
+        clock.tick(FPS)
+
+        # Get input ============================================================
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                in_titlescreen = False
+        
+        # Update processes =====================================================
+
+        now = pygame.time.get_ticks()
+        if now - ts_timer > 3000:
+            # Play the soundtrack
+            pygame.mixer.music.play(loops=-1)
+            pygame.mixer.Channel(0).play(pygame.mixer.Sound(os.path.join(SFX_DIR, "ambience.wav")), -1)
+            in_titlescreen = False
+            in_menu = True
+        
+        # Draw processes =======================================================
+        
+        window.fill(SNOW_WHITE)
+        draw_bouncies(bouncies)
+        window.blit(dev_logo_img, ( (WIN_RES["W"] / 2) - (dev_logo_img.get_width() / 2) * 2.8, WIN_RES["H"] * 0.3) )
+        draw_text(window, "a game by", 32, GAME_FONT, WIN_RES["W"] / 2.3, WIN_RES["H"] * 0.4, BLACK)
+        draw_text(window, "zyenapz", 32, GAME_FONT, WIN_RES["W"] / 2.3, WIN_RES["H"] * 0.45, BLACK)
+        draw_text(window, "(c) 2020 zyenapz. All rights reserved.", 14, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.97, BLACK, "centered")
+
+        # Update the window
+        pygame.display.flip()
+        
     while in_menu:
         
         # Increment the background's and parallax's y positions
@@ -272,9 +333,7 @@ while running:
             draw_text(window, "HS 0", 32, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.72, BLACK, "centered")
         else:
             draw_text(window, f"HS {hi_scores[0]}", 32, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.72, BLACK, "centered")
-        draw_text(window, "powered by pygame.", 14, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.89, GRAY, "centered")
-        draw_text(window, "Programming and art assets by zyenapz.", 14, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.91, GRAY, "centered")
-        draw_text(window, "(c) 2020 zyenapz. All rights reserved.", 14, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.93, GRAY, "centered")
+        draw_text(window, "powered by pygame.", 14, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.93, GRAY, "centered")
         draw_text(window, "Music from Joshua McLean.", 14, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.95, GRAY, "centered")
         draw_text(window, "Font from codeman38.", 14, GAME_FONT, WIN_RES["W"] / 2, WIN_RES["H"] * 0.97, GRAY, "centered")
 
@@ -349,7 +408,7 @@ while running:
                 elif type(hit) == Obstacle:
                     is_collidable = True
                     
-                distance = hit.radius * 1.15
+                distance = hit.radius * 1.5
                 proximity_x = abs(hit.rect.centerx - player.rect.centerx)
 
                 if is_collidable and proximity_x < distance:
@@ -393,9 +452,10 @@ while running:
             score += 0.05
                 
             # Calculate enemy count
-            enemy_count = (score**2) / (4**4)
-            if enemy_count > 15:
-                enemy_count = 15
+            enemy_count = (score**2) / (6**4)
+
+            if enemy_count > 12:
+                enemy_count = 12
 
             # Spawn enemies
             if threat == "none":
@@ -443,6 +503,7 @@ while running:
         fracture_group.draw(window)
         obstacles.draw(window)
         opfracture_group.draw(window)
+        update_shadows(shadows)
         impdebris_group.draw(window)
         update_particles(particles)
         update_particles(particles_coins)

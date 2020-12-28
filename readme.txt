@@ -1,5 +1,5 @@
 Yukon Escape
-Release version: 1.0.1
+Release version: 1.0.2
 Author: zyenapz
 E-mail: zyenapz@gmail.com
 Website: zyenapz.github.io
@@ -26,6 +26,12 @@ Other assets:
 	- Alarm downloaded from fesliyanstudios.com
 
 -------------------------------------------------
+Update 1.0.2
+- Changed the pacing of the game so that it is more forgiving for new players
+- Added dev logo screen
+- Changed the player's color from blue to red to distinguish it more from the terrain
+- Added shadows where the debris would fall
+
 Update 1.0.1
 - Changed the spawning rate of the obstacles so that the action starts sooner.
 - Increased the reward for near misses from 5 points to 8 points.

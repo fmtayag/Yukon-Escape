@@ -15,6 +15,7 @@ LIGHT_GREEN = (155,188,15)
 SNOW_WHITE = (245, 245, 255)
 BLACK = (27,31,33)
 GRAY = (104,111,153)
+SHADOW = (114,118,148)
 
 # Sprite groups ================================================================
 sprites = pygame.sprite.Group()
@@ -27,6 +28,8 @@ opfracture_group = pygame.sprite.Group() # Opened fracture
 player_group = pygame.sprite.Group()
 particles = list()
 particles_coins = list()
+shadows = list()
+bouncies = list()
 
 # Threat system ================================================================
 # [obstacle, debris, fracture]
@@ -38,9 +41,9 @@ spawn_odds["normal"] = [8, 1, 1]
 spawn_odds["hard"] = [6,2,2]
 
 MAX_THREAT_ENEMIES = dict()
-MAX_THREAT_ENEMIES["tectonics"] = 10
-MAX_THREAT_ENEMIES["forest"] = 24
-MAX_THREAT_ENEMIES["debris"] = 7
+MAX_THREAT_ENEMIES["tectonics"] = 7
+MAX_THREAT_ENEMIES["forest"] = 15
+MAX_THREAT_ENEMIES["debris"] = 5
 
 # Movement =====================================================================
 SPRITE_MOVESPEED = 8
