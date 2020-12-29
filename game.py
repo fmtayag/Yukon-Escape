@@ -104,6 +104,7 @@ debris_imgs["impacted"] = debris_impacted_imgs
 
 # Other images
 logo_img = load_png("logo.png", IMG_DIR, 8, convert_alpha=True)
+dev_logo_img = load_png("dev_logo.png", IMG_DIR, 6, convert_alpha=True)
 
 background_img = load_png("background.png", IMG_DIR, 4)
 background_rect = background_img.get_rect()
@@ -117,8 +118,6 @@ alert_debris_img = load_png("alert_debris.png", IMG_DIR, 6)
 alert_rect = alert_forest_img.get_rect()
 alert_rect.centerx = WIN_RES["W"] / 2
 alert_rect.y = WIN_RES["H"] * 0.1
-
-dev_logo_img = load_png("dev_logo.png", IMG_DIR, 6, convert_alpha=True)
 
 # Sounds =======================================================================
 
