@@ -262,7 +262,7 @@ class Particle():
             self.size = 16
             self.y = self.y + random.randrange(-16,16)
 
-    def update(self):
+    def draw(self):
         self.x += self.spdx
         self.y += self.spdy
         if self.launch_type == "explosion":
@@ -286,7 +286,7 @@ class Shadow():
         self.y = round(y * 1.5)
         self.Caster = Caster
 
-    def update(self):
+    def draw(self):
         radius = 5 * (self.Caster.scaler + 1)
         pygame.draw.circle(self.window, SHADOW, (self.Caster.rect.centerx, self.y), radius)
         #pygame.draw.circle(self.window, SHADOW, (self.Caster.rect.centerx, self.y), radius)
@@ -301,7 +301,7 @@ class Bouncy():
         self.speedy = random.choice([-3,3])
 
     def draw(self):
-        
+
         if self.x < 0:
             self.speedx = abs(self.speedx)
         elif self.x > self.window.get_width():
@@ -310,7 +310,7 @@ class Bouncy():
         if self.y < 0:
             self.speedy = abs(self.speedy)
         elif self.y > self.window.get_height():
-            self.speedy = -self.speedy 
+            self.speedy = -self.speedy
 
         pygame.draw.rect(self.window, SHADOW, (self.x, self.y, self.size, self.size))
 

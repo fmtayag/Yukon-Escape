@@ -41,3 +41,25 @@ def shake(intensity, n):
     while True:
         yield (0, 0)
 
+def draw_shadows(shadows_list):
+    for shadow in shadows_list:
+        shadow.draw()
+
+        if shadow.Caster.impacted:
+            shadows_list.remove(shadow)
+            del shadow
+
+def draw_bouncies(bouncies):
+    for b in bouncies:
+        b.draw()
+
+def draw_particles(particles_list):
+    for p in particles_list:
+        p.draw()
+
+        if (p.x < -p.size or
+            p.x > p.WIN_RES["W"] + p.size or
+            p.y < -p.size or
+            p.y > p.WIN_RES["H"] + p.size):
+                particles_list.remove(p)
+                del p

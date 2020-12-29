@@ -1,5 +1,5 @@
 Yukon Escape
-Release version: 1.0.2
+Release version: 1.0.3
 Author: zyenapz
 E-mail: zyenapz@gmail.com
 Website: zyenapz.github.io
@@ -26,6 +26,11 @@ Other assets:
 	- Alarm downloaded from fesliyanstudios.com
 
 -------------------------------------------------
+Update 1.0.3
+- Made the code prettier to look at
+- Made the intro to menu transition much more smoother
+- Added "new hi-score" notice to the game over screen if the player surpasses their hi-score 
+
 Update 1.0.2
 - Changed the pacing of the game so that it is more forgiving for new players
 - Added dev logo screen
